@@ -1,0 +1,172 @@
+
+from tkinter import *
+from tkinter import ttk
+from deep_translator import GoogleTranslator
+import json
+from difflib import get_close_matches
+from tkinter import messagebox
+import pyttsx3
+import time
+
+engine = pyttsx3.init()
+voice = engine.getProperty("voices")
+engine.setProperty("voice", voice[0].id)
+
+translated_text = ""
+
+def search():
+    progress.place(x=599, y=246)
+    progress.start()
+    root.after(2000, fetch_meaning)
+
+def fetch_meaning():
+    data = json.load(open("data.json"))
+    word = enterwordentry.get().lower()
+    
+    if word in data:
+        meaning = data[word]
+        textarea.delete(1.0, END)
+        for item in meaning:
+            textarea.insert(END, u"\u2022" + item + "\n\n")
+    elif len(get_close_matches(word, data.keys())) > 0:
+        close_match = get_close_matches(word, data.keys())[0]
+        res = messagebox.askyesno("CONFIRM", f"Did You Mean {close_match} instead?")
+        if res:
+            enterwordentry.delete(0, END)
+            enterwordentry.insert(END, close_match)
+            meaning = data[close_match]
+            textarea.delete(1.0, END)
+            for item in meaning:
+                textarea.insert(END, u"\u2022" + item + "\n\n")
+        else:
+            messagebox.showerror("Error", "The Word Doesn't Exist, Double Check It!")
+            enterwordentry.delete(0, END)
+            textarea.delete(1.0, END)
+    else:
+        messagebox.showinfo("Information", "The Word Doesn't Exist")
+        enterwordentry.delete(0, END)
+        textarea.delete(1.0, END)
+    
+    progress.stop()
+    progress.place_forget()
+
+def clear():
+    enterwordentry.delete(0, END)
+    textarea.delete(1.0, END)
+
+def exit():
+    res = messagebox.askyesno("Confirm", "Do You Want To Exit?")
+    if res:
+        root.destroy()
+
+def wordaudio():
+    engine.say(enterwordentry.get())
+    engine.runAndWait()
+
+def meaningaudio():
+    engine.say(textarea.get(1.0, END))
+    engine.runAndWait()
+    
+    
+
+root = Tk()
+root.geometry("1000x626+350+55")
+root.title("Talking Dictionary Created By HALLEH")
+root.resizable(0, 0)
+root.iconbitmap("iiconn.svg")
+
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("TProgressbar", thickness=30, troughcolor='light goldenrod yellow', background='thistle')
+
+progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="indeterminate", style="TProgressbar")
+
+bgimage = PhotoImage(file="bgg.png")
+bgLabel = Label(root, image=bgimage)
+bgLabel.place(x=0, y=0)
+
+enterwordlabel = Label(root, text="Enter Word", font=("castellar", 30, "bold"), foreground="black", background="white smoke")
+enterwordlabel.place(x=530, y=20)
+enterwordentry = Entry(root, font=("arial", 23, "bold"), justify=CENTER, bd=5, relief=SUNKEN, background="lavender")
+enterwordentry.place(x=510, y=80)
+
+searchimage = PhotoImage(file="searchh.png")
+searchbutton = Button(root, image=searchimage, cursor="star", activebackground="plum3", command=search)
+searchbutton.place(x=680, y=185)
+
+micimage = PhotoImage(file="mic.png")
+micButton = Button(root, image=micimage, cursor="dotbox", activebackground="lightskyblue1", command=wordaudio)
+micButton.place(x=780, y=185)
+
+meaninglabel = Label(root, text="Meaning", font=("castellar", 29, "bold"), fg="black", bg="whitesmoke")
+meaninglabel.place(x=580, y=270)
+
+textarea = Text(root, width=38, height=8, font=("arial"), bd=7, relief=SUNKEN, background="lavender")
+textarea.place(x=470, y=330)
+
+audioimage = PhotoImage(file="volume.png")
+audioButton = Button(root, image=audioimage, font="castellar", activebackground="lemon chiffon", cursor="sizing", command=meaningaudio)
+audioButton.place(x=600, y=555)
+
+clearimage = PhotoImage(file="clearrr.png")
+clearButton = Button(root, image=clearimage, activebackground="#ADD8E6", cursor="tcross", command=clear)
+clearButton.place(x=700, y=555)
+
+exitimage = PhotoImage(file="exitt.png")
+exitButton = Button(root, image=exitimage, activebackground="wheat", cursor="hand1", command=exit)
+exitButton.place(x=790, y=555)
+
+def enter_function(event):
+    searchbutton.invoke()
+
+root.bind("<Return>", enter_function)
+
+LANGUAGES = {
+    'af': 'afrikaans', 'sq': 'albanian', 'am': 'amharic', 'ar': 'arabic', 'hy': 'armenian', 'az': 'azerbaijani', 
+    'eu': 'basque', 'be': 'belarusian', 'bn': 'bengali', 'bs': 'bosnian', 'bg': 'bulgarian', 'ca': 'catalan', 
+    'ceb': 'cebuano', 'ny': 'chichewa', 'zh-cn': 'chinese (simplified)', 'zh-tw': 'chinese (traditional)', 
+    'co': 'corsican', 'hr': 'croatian', 'cs': 'czech', 'da': 'danish', 'nl': 'dutch', 'en': 'english', 
+    'eo': 'esperanto', 'et': 'estonian', 'tl': 'filipino', 'fi': 'finnish', 'fr': 'french', 'fy': 'frisian', 
+    'gl': 'galician', 'ka': 'georgian', 'de': 'german', 'el': 'greek', 'gu': 'gujarati', 'ht': 'haitian creole', 
+    'ha': 'hausa', 'haw': 'hawaiian', 'iw': 'hebrew', 'hi': 'hindi', 'hmn': 'hmong', 'hu': 'hungarian', 'is': 'icelandic', 
+    'ig': 'igbo', 'id': 'indonesian', 'ga': 'irish', 'it': 'italian', 'ja': 'japanese', 'jw': 'javanese', 'kn': 'kannada', 
+    'kk': 'kazakh', 'km': 'khmer', 'rw': 'kinyarwanda', 'ko': 'korean', 'ku': 'kurdish (kurmanji)', 'ky': 'kyrgyz', 
+    'lo': 'lao', 'la': 'latin', 'lv': 'latvian', 'lt': 'lithuanian', 'lb': 'luxembourgish', 'mk': 'macedonian', 
+    'mg': 'malagasy', 'ms': 'malay', 'ml': 'malayalam', 'mt': 'maltese', 'mi': 'maori', 'mr': 'marathi', 'mn': 'mongolian', 
+    'my': 'myanmar (burmese)', 'ne': 'nepali', 'no': 'norwegian', 'or': 'odia', 'ps': 'pashto', 'fa': 'persian', 
+    'pl': 'polish', 'pt': 'portuguese', 'pa': 'punjabi', 'ro': 'romanian', 'ru': 'russian', 'sm': 'samoan', 'gd': 'scots gaelic', 
+    'sr': 'serbian', 'st': 'sesotho', 'sn': 'shona', 'sd': 'sindhi', 'si': 'sinhala', 'sk': 'slovak', 'sl': 'slovenian', 
+    'so': 'somali', 'es': 'spanish', 'su': 'sundanese', 'sw': 'swahili', 'sv': 'swedish', 'tg': 'tajik', 'ta': 'tamil', 
+    'tt': 'tatar', 'te': 'telugu', 'th': 'thai', 'tr': 'turkish', 'tk': 'turkmen', 'uk': 'ukrainian', 'ur': 'urdu', 
+    'ug': 'uyghur', 'uz': 'uzbek', 'vi': 'vietnamese', 'cy': 'welsh', 'xh': 'xhosa', 'yi': 'yiddish', 'yo': 'yoruba', 
+    'zu': 'zulu'
+}
+
+languages = list(LANGUAGES.values())
+dest_lang = ttk.Combobox(root, values=languages, width=22,cursor="circle")
+dest_lang.place(x=640, y=140)
+dest_lang.set("Choose Language")
+
+def translate():
+    progress.place(x=599, y=246)  
+    progress.start()  
+    root.after(2000, fetch_translation)  
+
+def fetch_translation():
+    global translated_text
+    lang_dict = {v: k for k, v in LANGUAGES.items()}
+    dest_code = lang_dict.get(dest_lang.get())
+    if dest_code:
+        translated_text = GoogleTranslator(source='auto', target=dest_code).translate(enterwordentry.get())
+        textarea.delete(1.0, END)
+        textarea.insert(END, translated_text)
+    else:
+        messagebox.showerror("Error", "Invalid language selected")
+    progress.stop()  
+    progress.place_forget()  
+
+transimage = PhotoImage(file="trans.png")
+trans_btn = Button(root, image=transimage, cursor="target",activebackground="light steel blue", command=translate)
+trans_btn.place(x=590, y=186)
+
+root.mainloop()
